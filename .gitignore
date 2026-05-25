@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+
+# Environment — never commit secrets
+.env
+.env.local
+.env.*.local
+.env.development
+.env.production
+
+# Next.js
+frontend/.next/
+frontend/out/
+
+# NestJS build
+backend/dist/
+
+# Prisma generated client
+backend/node_modules/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
