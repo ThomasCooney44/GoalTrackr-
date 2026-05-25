@@ -1,0 +1,187 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Users ───────────────────────────────────────────────────────────────────
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String?
+  name         String
+  avatarUrl    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  ownedGoals          Goal[]            @relation("GoalOwner")
+  participations      GoalParticipant[]
+  submissions         Submission[]
+  notifications       Notification[]
+  reviewedSubmissions Submission[]      @relation("ReviewedBy")
+  refreshTokens       RefreshToken[]
+}
+
+// ─── Goals ───────────────────────────────────────────────────────────────────
+
+model Goal {
+  id              String          @id @default(uuid())
+  ownerId         String
+  title           String
+  description     String?
+  deadline        DateTime
+  checkInInterval CheckInInterval @default(NONE)
+  status          GoalStatus      @default(ACTIVE)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  owner         User              @relation("GoalOwner", fields: [ownerId], references: [id])
+  participants  GoalParticipant[]
+  submissions   Submission[]
+  forfeit       Forfeit?
+  notifications Notification[]
+
+  @@index([ownerId])
+  @@index([status])
+  @@index([deadline])
+}
+
+enum GoalStatus {
+  ACTIVE
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum CheckInInterval {
+  NONE
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
+}
+
+// ─── Goal Participants ────────────────────────────────────────────────────────
+
+model GoalParticipant {
+  id          String            @id @default(uuid())
+  goalId      String
+  userId      String?
+  inviteEmail String
+  inviteToken String            @unique @default(uuid())
+  status      ParticipantStatus @default(PENDING)
+  invitedAt   DateTime          @default(now())
+  respondedAt DateTime?
+
+  goal Goal  @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  user User? @relation(fields: [userId], references: [id])
+
+  @@unique([goalId, inviteEmail])
+  @@index([goalId])
+  @@index([inviteToken])
+}
+
+enum ParticipantStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
+// ─── Submissions ──────────────────────────────────────────────────────────────
+
+model Submission {
+  id            String           @id @default(uuid())
+  goalId        String
+  submittedById String
+  content       String
+  mediaUrl      String?
+  status        SubmissionStatus @default(PENDING)
+  reviewNote    String?
+  reviewedById  String?
+  reviewedAt    DateTime?
+  createdAt     DateTime         @default(now())
+
+  goal        Goal  @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  submittedBy User  @relation(fields: [submittedById], references: [id])
+  reviewedBy  User? @relation("ReviewedBy", fields: [reviewedById], references: [id])
+
+  @@index([goalId])
+  @@index([status])
+}
+
+enum SubmissionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+// ─── Forfeits ─────────────────────────────────────────────────────────────────
+
+model Forfeit {
+  id          String        @id @default(uuid())
+  goalId      String        @unique
+  description String
+  status      ForfeitStatus @default(PENDING)
+  triggeredAt DateTime?
+  confirmedAt DateTime?
+
+  goal Goal @relation(fields: [goalId], references: [id], onDelete: Cascade)
+}
+
+enum ForfeitStatus {
+  PENDING
+  TRIGGERED
+  CONFIRMED
+  WAIVED
+}
+
+// ─── Notifications ────────────────────────────────────────────────────────────
+
+model Notification {
+  id            String           @id @default(uuid())
+  userId        String
+  type          NotificationType
+  title         String
+  body          String
+  read          Boolean          @default(false)
+  relatedGoalId String?
+  createdAt     DateTime         @default(now())
+
+  user User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  goal Goal? @relation(fields: [relatedGoalId], references: [id], onDelete: SetNull)
+
+  @@index([userId, read])
+  @@index([createdAt])
+}
+
+enum NotificationType {
+  INVITE_RECEIVED
+  INVITE_ACCEPTED
+  INVITE_DECLINED
+  SUBMISSION_PENDING
+  SUBMISSION_APPROVED
+  SUBMISSION_REJECTED
+  WEEKLY_REMINDER
+  MISSING_SUBMISSION
+  DEADLINE_APPROACHING
+  FORFEIT_TRIGGERED
+  FORFEIT_CONFIRMED
+  FORFEIT_WAIVED
+}
+
+// ─── Refresh Tokens ───────────────────────────────────────────────────────────
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+}
