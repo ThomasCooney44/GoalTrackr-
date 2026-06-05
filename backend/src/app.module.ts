@@ -22,15 +22,28 @@ import { MailModule } from './mail/mail.module';
     // Rate limiting
     ThrottlerModule.forRoot([{ ttl: 60000, limit: 100 }]),
 
-    // BullMQ / Redis
+    // BullMQ / Redis — supports REDIS_URL (Railway) or REDIS_HOST/PORT (local)
     BullModule.forRootAsync({
       inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        redis: {
-          host: config.get('REDIS_HOST', 'localhost'),
-          port: config.get<number>('REDIS_PORT', 6379),
-        },
-      }),
+      useFactory: (config: ConfigService) => {
+        const redisUrl = config.get<string>('REDIS_URL');
+        if (redisUrl) {
+          const url = new URL(redisUrl);
+          return {
+            redis: {
+              host: url.hostname,
+              port: parseInt(url.port) || 6379,
+              password: url.password || undefined,
+            },
+          };
+        }
+        return {
+          redis: {
+            host: config.get('REDIS_HOST', 'localhost'),
+            port: config.get<number>('REDIS_PORT', 6379),
+          },
+        };
+      },
     }),
 
     // Feature modules

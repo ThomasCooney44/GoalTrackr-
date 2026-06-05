@@ -16,8 +16,8 @@ export class UploadsService {
       region: 'auto',
       endpoint: `https://${config.get('R2_ACCOUNT_ID')}.r2.cloudflarestorage.com`,
       credentials: {
-        accessKeyId: config.get('R2_ACCESS_KEY_ID'),
-        secretAccessKey: config.get('R2_SECRET_ACCESS_KEY'),
+        accessKeyId: config.get('R2_ACCESS_KEY_ID') ?? '',
+        secretAccessKey: config.get('R2_SECRET_ACCESS_KEY') ?? '',
       },
     });
     this.bucket = config.get('R2_BUCKET_NAME', 'goaltrackr-uploads');
