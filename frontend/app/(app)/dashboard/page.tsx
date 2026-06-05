@@ -24,8 +24,8 @@ export default function DashboardPage() {
     );
   }
 
-  const activeGoals = goals?.filter((g) => g.status === 'ACTIVE') ?? [];
-  const pastGoals = goals?.filter((g) => g.status !== 'ACTIVE') ?? [];
+  const activeGoals = goals?.filter((g: any) => g.status === 'ACTIVE') ?? [];
+  const pastGoals = goals?.filter((g: any) => g.status !== 'ACTIVE') ?? [];
 
   return (
     <div>
@@ -56,7 +56,7 @@ export default function DashboardPage() {
             Active Goals
           </h2>
           <div className="grid gap-3 sm:grid-cols-2">
-            {activeGoals.map((goal) => (
+            {activeGoals.map((goal: any) => (
               <GoalCard key={goal.id} goal={goal} />
             ))}
           </div>
@@ -86,7 +86,7 @@ export default function DashboardPage() {
             Past Goals
           </h2>
           <div className="grid gap-3 sm:grid-cols-2">
-            {pastGoals.map((goal) => (
+            {pastGoals.map((goal: any) => (
               <GoalCard key={goal.id} goal={goal} />
             ))}
           </div>
